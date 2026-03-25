@@ -1,0 +1,2 @@
+pip install mido
+python tools\midi_to_c.py song.mid | Out-File -Encoding utf8 midi_data.h
