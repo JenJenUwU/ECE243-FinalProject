@@ -179,6 +179,8 @@ int main(void) {
         }
     }
 
+    piano_draw_end_screen();
+
     /* Program done; infinite halt */
     while (1) {
     }

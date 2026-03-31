@@ -587,3 +587,37 @@ void piano_render(void) {
 
     wait_for_vsync();
 }
+
+/**
+ * @brief Displays a simple blocky "END" screen across both hardware buffers.
+ */
+void piano_draw_end_screen(void) {
+    for (int b = 0; b < 2; b++) {
+        draw_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, BLACK);
+        
+        int start_x = (SCREEN_WIDTH - 80) / 2;
+        int start_y = (SCREEN_HEIGHT - 30) / 2;
+        
+        // E
+        draw_rect(start_x, start_y, 20, 5, WHITE);
+        draw_rect(start_x, start_y, 5, 30, WHITE);
+        draw_rect(start_x, start_y + 12, 15, 5, WHITE);
+        draw_rect(start_x, start_y + 25, 20, 5, WHITE);
+        
+        // N
+        int nx = start_x + 30;
+        draw_rect(nx, start_y, 5, 30, WHITE);
+        draw_rect(nx + 5, start_y + 5, 5, 10, WHITE);
+        draw_rect(nx + 10, start_y + 15, 5, 10, WHITE);
+        draw_rect(nx + 15, start_y, 5, 30, WHITE);
+        
+        // D
+        int dx = nx + 30;
+        draw_rect(dx, start_y, 15, 5, WHITE);
+        draw_rect(dx, start_y, 5, 30, WHITE);
+        draw_rect(dx, start_y + 25, 15, 5, WHITE);
+        draw_rect(dx + 15, start_y + 5, 5, 20, WHITE);
+
+        wait_for_vsync();
+    }
+}

@@ -25,4 +25,7 @@ void piano_update(uint32_t now_ms);
 /** @brief Clears and redraws notes safely using double-buffered pixel memory */
 void piano_render(void);
 
+/** @brief Displays a simple end screen when the song is over */
+void piano_draw_end_screen(void);
+
 #endif
