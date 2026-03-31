@@ -1,8 +1,8 @@
 INSTALL	:= C:/intelFPGA/QUARTUS_Lite_V23.1
 
 MAIN    := main.c
-HDRS    := midi_data.h audio.h piano.h
-SRCS    := main.c audio.c piano.c
+HDRS    := midi_data.h audio.h piano.h ps2.h
+SRCS    := main.c audio.c piano.c ps2.c
 
 SHELL	:= cmd.exe
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file midi_data.h
  * @brief Pre-compiled MIDI song data and audio frequency lookup tables.
  */

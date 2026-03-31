@@ -15,9 +15,9 @@
 #define KEY_LIT     0x07FF   // cyan (white key lit)
 #define BLACK_LIT   0x07FF   // cyan (black key lit)
 
-#define NOTE_COL_0  0x001F   // blue
-#define NOTE_COL_1  0xF81F   // magenta
-#define NOTE_COL_2  0x07E0   // green
+#define NOTE_COL_0  0xa35b   // blue
+#define NOTE_COL_1  0xa35b   // magenta
+#define NOTE_COL_2  0xa35b   // green
 #define NOTE_COL_3  0xFFE0   // yellow
 
 // 88-key piano layout

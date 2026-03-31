@@ -23,10 +23,10 @@
 #define BLACK_LIT   0x07FF
 
 // 4 distinct colors used cyclically for the falling notes
-#define NOTE_COL_0  0x001F
-#define NOTE_COL_1  0xF81F
-#define NOTE_COL_2  0x07E0
-#define NOTE_COL_3  0xFFE0
+#define NOTE_COL_0  0x9bbb
+#define NOTE_COL_1  0x9bbb
+#define NOTE_COL_2  0x9bbb
+#define NOTE_COL_3  0x9bbb
 
 // 88-key standard piano physical layout tracking
 #define TOTAL_WHITE_KEYS  52
@@ -259,7 +259,7 @@ static void draw_piano_housing(void) {
 }
 
 static void draw_white_key(int i, short color) {
-    draw_rect(KEY_X[i] + 1, KEY_Y_START, KEY_W[i] - 1, KEY_HEIGHT - 2, color);
+    draw_rect(KEY_X[i] + 1, KEY_Y_START, KEY_W[i] - 1, KEY_HEIGHT - 1, color);
 }
 
 static void draw_white_keys_full(void) {

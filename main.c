@@ -14,6 +14,7 @@
 #include "audio.h"
 #include "piano.h"
 #include "midi_data.h"
+#include "ps2.h"
 
 /**
  * @brief Processes MIDI events up to a specific time and spawns notes.
@@ -34,16 +35,21 @@ static void process_midi_until(uint32_t now_ms,
                                uint32_t *next_visual_note,
                                active_note_t *voices,
                                uint32_t sample,
-                               uint32_t lead_ms) {
+                               uint32_t lead_ms,
+                               uint32_t speed_factor_q16) {
     
     /* 1. Audio: Start playing notes if their start time has passed (delayed by lead_ms) */
     while (*next_audio_note < MIDI_NOTE_COUNT &&
            (MIDI_NOTES[*next_audio_note].start_ms + lead_ms) <= now_ms) {
+        
+        uint32_t duration_ms = MIDI_NOTES[*next_audio_note].duration_ms;
+        uint32_t adj_duration_ms = (uint32_t)(((uint64_t)duration_ms * 65536ULL) / speed_factor_q16);
+
         voice_start(voices,
                     MIDI_NOTES[*next_audio_note].note,
                     MIDI_NOTES[*next_audio_note].velocity,
                     sample,
-                    MIDI_NOTES[*next_audio_note].duration_ms);
+                    adj_duration_ms);
         (*next_audio_note)++;
     }
 
@@ -86,11 +92,16 @@ int main(void) {
     /* Initialize hardware modules */
     audio_init();
     piano_init();
+    ps2_init();
 
-    uint32_t sample           = 0;
-    uint32_t next_audio_note  = 0;
-    uint32_t next_visual_note = 0;
+    uint32_t hw_sample         = 0;
+    uint32_t next_audio_note   = 0;
+    uint32_t next_visual_note  = 0;
     uint32_t next_frame_sample = 0;
+    
+    uint64_t logic_time_frac_ms = 0;
+    bool is_paused = false;
+    uint32_t speed_factor_q16 = 65536; // 1.0x
 
     /* Number of audio samples that transpire during one 30 FPS video frame */
     const uint32_t samples_per_frame = SAMPLE_RATE / FPS;
@@ -106,20 +117,47 @@ int main(void) {
          * boundary of the next video frame. This ensures the audio stream
          * never stutters, even if visual rendering takes heavily varying time.
          */
-        while (audio_fifo_has_space() && sample < next_frame_sample) {
-            /* Calculate current millisecond timestamp based purely on samples played */
-            uint32_t now_ms = (sample * 1000U) / SAMPLE_RATE;
+        while (audio_fifo_has_space() && hw_sample < next_frame_sample) {
+            
+            /* Poll Keyboard events */
+            bool is_pressed;
+            uint16_t key_code;
+            while (ps2_poll_key(&is_pressed, &key_code)) {
+                if (is_pressed) {
+                    if (key_code == 0x29) { // Spacebar
+                        is_paused = !is_paused;
+                    } else if (key_code == 0xE075) { // Up Arrow
+                        speed_factor_q16 += 6553; // Increase by ~10%
+                        if (speed_factor_q16 > 131072) { // Max 2.0x
+                            speed_factor_q16 = 131072;
+                        }
+                    } else if (key_code == 0xE072) { // Down Arrow
+                        if (speed_factor_q16 > 16384 + 6553) { // Min 0.25x (16384)
+                            speed_factor_q16 -= 6553;
+                        } else {
+                            speed_factor_q16 = 16384; 
+                        }
+                    }
+                }
+            }
+
+            if (!is_paused) {
+                logic_time_frac_ms += (1000ULL * speed_factor_q16) / SAMPLE_RATE;
+            }
+
+            uint32_t now_ms = (uint32_t)(logic_time_frac_ms >> 16);
 
             process_midi_until(now_ms,
                                &next_audio_note,
                                &next_visual_note,
                                voices,
-                               sample,
-                               lead_ms);
+                               hw_sample,
+                               lead_ms,
+                               speed_factor_q16);
 
             /* Generate next wave sample and write to the audio codec */
-            audio_write_sample(synth_mix(voices, sample));
-            sample++;
+            audio_write_sample(synth_mix(voices, hw_sample));
+            hw_sample++;
         }
 
         /*
@@ -128,8 +166,8 @@ int main(void) {
          * blocks and highlighting keys. The audio FIFO handles music playback
          * smoothly in the background while the processor blocks on VSync.
          */
-        if (sample >= next_frame_sample) {
-            uint32_t now_ms = (sample * 1000U) / SAMPLE_RATE;
+        if (hw_sample >= next_frame_sample) {
+            uint32_t now_ms = (uint32_t)(logic_time_frac_ms >> 16);
             piano_update(now_ms);
             piano_render();
             next_frame_sample += samples_per_frame;
